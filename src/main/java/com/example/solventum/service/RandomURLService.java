@@ -4,7 +4,9 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class RandomURLService {
@@ -32,7 +34,7 @@ public class RandomURLService {
         if (shortToLong.containsKey(shortUrl)) {
             return shortToLong.get(shortUrl);
         } else {
-            throw new RuntimeException();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Short URL does not exist");
         }
     }
 

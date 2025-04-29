@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.solventum.SolventumApplication;
+import com.example.solventum.exceptions.TooManyRequestsException;
 import com.example.solventum.semaphore.MySemaphore;
 import com.example.solventum.service.RandomURLService;
 
@@ -32,7 +32,7 @@ public class MyController {
                 concurrentLock.release();
             }
         } else {
-            throw new RuntimeException();
+            throw new TooManyRequestsException();
         }
 	}
 
@@ -46,7 +46,7 @@ public class MyController {
                 concurrentLock.release();
             }
         } else {
-            throw new RuntimeException();
+            throw new TooManyRequestsException();
         }
 	}
 }
