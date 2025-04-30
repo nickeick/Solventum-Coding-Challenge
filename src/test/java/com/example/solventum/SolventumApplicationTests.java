@@ -12,10 +12,13 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.mockito.Mockito.when;
 
+import com.example.solventum.data.MyResponse;
 import com.example.solventum.semaphore.MySemaphore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -35,7 +38,8 @@ class SolventumApplicationTests {
 
 	@Test
 	void encodeShouldReturnMessageDefault() throws Exception {
-		this.mockMvc.perform(get("/encode")).andExpect(status().isOk());
+		this.mockMvc.perform(get("/encode")).andExpect(status().isOk())
+														.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 	}
 
 	@Test
@@ -45,7 +49,8 @@ class SolventumApplicationTests {
 
 	@Test
 	void encodeShouldReturnMessageURL() throws Exception {
-		this.mockMvc.perform(get("/encode?url=test.com")).andExpect(status().isOk());
+		this.mockMvc.perform(get("/encode?url=test.com")).andExpect(status().isOk())
+																	 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 	}
 
 	@Test
@@ -65,8 +70,10 @@ class SolventumApplicationTests {
 		MvcResult result = this.mockMvc.perform(get("/encode?url=google.com")).andExpect(status().isOk())
 																						  .andReturn();
 		String response = result.getResponse().getContentAsString();
-		this.mockMvc.perform(get("/decode?url=" + response)).andExpect(status().isOk())
-															.andExpect(content().string("google.com"));
+		MyResponse responseObject = new ObjectMapper().readValue(response, MyResponse.class);
+		this.mockMvc.perform(get("/decode?url=" + responseObject.getURL())).andExpect(status().isOk())
+															.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+															.andExpect(jsonPath("$.url").value("google.com"));
 	}
 
 	@Test

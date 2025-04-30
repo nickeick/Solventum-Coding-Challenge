@@ -4,12 +4,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.solventum.data.MyResponse;
 import com.example.solventum.exceptions.TooManyRequestsException;
 import com.example.solventum.semaphore.MySemaphore;
 import com.example.solventum.service.RandomURLService;
@@ -32,7 +32,7 @@ public class MyController {
     }
 
     @GetMapping("/encode")
-	public String encode(@RequestParam(value = "url", defaultValue = "https://example.com/library/react") String urlString) {
+	public MyResponse encode(@RequestParam(value = "url", defaultValue = "https://example.com/library/react") String urlString) {
         Matcher matcher = pattern.matcher(urlString);
         // I decided to pattern match to check that the input is a valid URL "example.com"
         // I thought about checking to see if the input would be able to complete a valid request, however
@@ -40,7 +40,7 @@ public class MyController {
         if (matcher.find()) {
             if (concurrentLock.tryAcquire()) {
                 try {
-                    return randomURLService.getShortUrl(urlString);
+                    return new MyResponse(randomURLService.getShortUrl(urlString));
                 } finally {
                     concurrentLock.release();
                 }
@@ -55,10 +55,10 @@ public class MyController {
 
     // A get endpoint with the specified name. I decided to use a Request parameter to retrieve the url. I just like them and I like the default value part.
 	@GetMapping("/decode")
-	public String decode(@RequestParam(value = "url", defaultValue = "http://short.est/GeAi9K") String urlString) {
+	public MyResponse decode(@RequestParam(value = "url", defaultValue = "http://short.est/GeAi9K") String urlString) {
 		if (concurrentLock.tryAcquire()) {
             try {
-                return randomURLService.getLongUrl(urlString);
+                return new MyResponse(randomURLService.getLongUrl(urlString));
             } finally {
                 concurrentLock.release();
             }
