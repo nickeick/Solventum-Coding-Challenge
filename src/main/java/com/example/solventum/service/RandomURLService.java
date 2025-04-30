@@ -34,6 +34,7 @@ public class RandomURLService {
         if (shortToLong.containsKey(shortUrl)) {
             return shortToLong.get(shortUrl);
         } else {
+            // If the requirements specified a need for verbose responses, I would modify the error controller to include this reason in the response
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Short URL does not exist");
         }
     }

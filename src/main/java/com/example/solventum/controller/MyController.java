@@ -1,8 +1,14 @@
 package com.example.solventum.controller;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.solventum.exceptions.TooManyRequestsException;
 import com.example.solventum.semaphore.MySemaphore;
@@ -15,6 +21,8 @@ public class MyController {
 
     private final MySemaphore concurrentLock;
 
+    private final Pattern pattern = Pattern.compile(".+\\..+");
+
     public MyController(MySemaphore concurrentLock, RandomURLService randomURLService) {
         // I don't know if the requirements want me to make two semaphores, one for each endpoint or just one total
         // Because only one parameter is given in the example, I'm assuming it's just one lock for both
@@ -25,14 +33,23 @@ public class MyController {
 
     @GetMapping("/encode")
 	public String encode(@RequestParam(value = "url", defaultValue = "https://example.com/library/react") String urlString) {
-        if (concurrentLock.tryAcquire()) {
-            try {
-                return randomURLService.getShortUrl(urlString);
-            } finally {
-                concurrentLock.release();
+        Matcher matcher = pattern.matcher(urlString);
+        // I decided to pattern match to check that the input is a valid URL "example.com"
+        // I thought about checking to see if the input would be able to complete a valid request, however
+        // people could use this service for a domain that isn't registered or something similar, so I decided not to
+        if (matcher.find()) {
+            if (concurrentLock.tryAcquire()) {
+                try {
+                    return randomURLService.getShortUrl(urlString);
+                } finally {
+                    concurrentLock.release();
+                }
+            } else {
+                throw new TooManyRequestsException();
             }
         } else {
-            throw new TooManyRequestsException();
+            // If the requirements specified a need for verbose responses, I would modify the error controller to include this reason in the response
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid URL");
         }
 	}
 
